@@ -24,6 +24,10 @@ program automatic test
         reset();
         CPU_driver();
 
+        gen();
+        send();
+        receive();
+
         $display("###################################################################");
         $display("##################  Program End  !!!!!!! ##########################");
         $display("###################################################################");
@@ -198,7 +202,10 @@ program automatic test
         repeat (10) @(negedge clk);
         $write("Memory: Loading ... ");
         for (int i=0; i<=255; i++) begin
-            CellFwd.FWD = $urandom();
+            // CellFwd.FWD = $urandom();
+            
+            // 固定从 TX[3] 发送
+            CellFwd.FWD = 16'b1000;
             $display("CellFwd.FWD[%0d]=%0d (%0b)", i, CellFwd.FWD, CellFwd.FWD);
             CellFwd.VPI = i;
             HostWrite(i, CellFwd);
@@ -218,5 +225,93 @@ program automatic test
         $display("Verified");
 
     endtask : CPU_driver
+
+    // 生成校验子
+    function void generate_syndrome();
+        bit [7:0] sndrm;
+        for (int i = 0; i < 256; i = i + 1 ) begin
+            sndrm = i;
+            repeat (8) begin
+                if (sndrm[7] === 1'b1)
+                sndrm = (sndrm << 1) ^ 8'h07;
+                else
+                sndrm = sndrm << 1;
+            end
+            syndrome[i] = sndrm;
+        end
+    endfunction : generate_syndrome
+
+    //---------------------------------------------------------------------------
+    // Function to compute the HEC value
+    // 计算 HEC
+    function bit [7:0] hec (bit [31:0] hdr);
+        bit [7:0] heca;
+        heca = 8'h00;
+        repeat (4) begin
+            heca = syndrome[heca ^ hdr[31:24]];
+            hdr = hdr << 8;
+        end
+        heca = heca ^ 8'h55;
+        return heca;
+    endfunction : hec
+
+    // 随机生成报文数据
+    task gen();
+    
+        pkt_gen.uni.GFC = $urandom;
+        pkt_gen.uni.VPI = $urandom;
+        pkt_gen.uni.VCI = $urandom;
+        pkt_gen.uni.CLP = $urandom;
+        pkt_gen.uni.PT  = $urandom;
+        
+        generate_syndrome();
+        pkt_gen.uni.HEC = hec({pkt_gen.uni.GFC, pkt_gen.uni.VPI, pkt_gen.uni.VCI, pkt_gen.uni.CLP, pkt_gen.uni.PT});
+
+        for(int i=0; i<48;i=i+1) begin
+        pkt_gen.uni.Payload[i]= $urandom;
+            $display("... Payload Data is %h ............",pkt_gen.uni.Payload[i]);
+        end
+
+    endtask
+
+    // 数据送入 Rx[0]
+    task send();
+
+        @(Rx[0].cbr);
+        Rx[0].cbr.clav <= 1;
+        for (int i=0; i<=52; i++) begin
+                while (Rx[0].cbr.en === 1'b0) @(Rx[0].cbr);
+                Rx[0].cbr.soc  <= (i == 0);
+                Rx[0].cbr.data <= pkt_gen.Mem[i];
+                @(Rx[0].cbr);
+            end
+        repeat (2) @(negedge clk)  ;
+        Rx[0].cbr.soc  <= 0    ;
+        Rx[0].cbr.data <= 8'b0 ;
+        Rx[0].cbr.clav <= 1    ;
+    endtask
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // 存储 Tx[3]
+    task receive();
+
+        int j = 0 ;
+        Tx[3].cbt.clav <= 1;
+        
+        wait(Tx[3].cbt.en);
+        wait(Tx[3].cbt.soc);
+        while (j<=52) begin
+            if (Tx[3].cbt.en == 1'b1)begin
+                pkt_cmp.Mem[j] = Tx[3].cbt.data ;
+                @(Tx[3].cbt);
+                j = j + 1 ;
+            end
+            else begin 
+                @(Tx[3].cbt);
+            end
+        end
+        repeat (2) @(posedge clk);
+    endtask : receive
 
 endprogram
