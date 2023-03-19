@@ -5,14 +5,14 @@ module squat16 (
     input                  rst_n                 ,
     
 
-    input                  BusMode               , 
-    input      [11:0]      Addr                  ,
-    input                  Sel                   ,
-    input      [15:0]      DataIn                , 
-    input                  Rd_DS                 , 
-    input                  Wr_RW                 ,
-    output     [15:0]      DataOut               ,
-    output                 Rdy_Dtack             ,
+    input                               BusMode               , 
+    input      [11:0]                   Addr                  ,
+    input                               Sel                   ,
+    input      [12+`CHANNEL_NUM-1:0]    DataIn                , 
+    input                               Rd_DS                 , 
+    input                               Wr_RW                 ,
+    output     [12+`CHANNEL_NUM-1:0]    DataOut               ,
+    output                              Rdy_Dtack             ,
 
 
     input                  rx0_soc               ,
