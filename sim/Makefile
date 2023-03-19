@@ -1,6 +1,5 @@
 # Makefile for SystemVerilog Testbench Lab1
-LAB_DIR = lab1
-RTL= ../../rtl/hec_cal.v ../../rtl/LookupTable.v ../../rtl/utopia1_atm_rx.v ../../rtl/utopia1_atm_tx.v ../../rtl/FwdLkp.v ../../rtl/arbitor.v ../../rtl/squat.v
+RTL= ../src/rtl/hec_cal.v ../src/rtl/LookupTable.v ../src/rtl/utopia1_atm_rx.v ../src/rtl/utopia1_atm_tx.v ../src/rtl/FwdLkp.v ../src/rtl/arbitor.v ../src/rtl/squat.v ../src/rtl/squat.vh
 SVTB = ./top.sv ./cpu_ifc.sv ./Utopia.sv ./test.sv
 seed = 1
 
@@ -26,17 +25,17 @@ verdi_debug:
 debug:
 	./simv -l simv.log -gui=dve +ntb_random_seed=$(seed)
 
-solution: clean
-	cp -f ../../solutions/$(LAB_DIR)/*.sv .
+# solution: clean
+# 	cp -f ../../solutions/$(LAB_DIR)/*.sv .
 
 clean:
 	rm -rf simv* csrc* *.tmp *.vpd *.key *.log *hdrs.h *.fsdb verdiLog elabcomLog novas.* *.dat DVEfiles
 
-nuke: clean
-	rm -rf *.v* *.sv include .*.lock .*.old DVE* *.tcl *.h *.rc *.ses *.ses.* *.dat
-	cp -f ../../solutions/$(LAB_DIR)/router_io.sv.orig router_io.sv
-	cp -f ../../solutions/$(LAB_DIR)/router_test_top.sv.orig router_test_top.sv
-	cp -f ../../solutions/$(LAB_DIR)/test.sv.orig test.sv
+# nuke: clean
+# 	rm -rf *.v* *.sv include .*.lock .*.old DVE* *.tcl *.h *.rc *.ses *.ses.* *.dat
+# 	cp -f ../../solutions/$(LAB_DIR)/router_io.sv.orig router_io.sv
+# 	cp -f ../../solutions/$(LAB_DIR)/router_test_top.sv.orig router_test_top.sv
+# 	cp -f ../../solutions/$(LAB_DIR)/test.sv.orig test.sv
 
 help:
 	@echo ==========================================================================
@@ -58,8 +57,8 @@ help:
 	@echo  "                                                                       "
 	@echo  " -------------------- ADMINISTRATIVE TARGETS ------------------------- "
 	@echo  " help       => Displays this message.                                  "
-	@echo  " solution   => Copies all files from solutions directory.               "
-	@echo  " nuke       => Erase all files except Makefile. Put directory back to original state. "
+#	@echo  " solution   => Copies all files from solutions directory.               "
+#	@echo  " nuke       => Erase all files except Makefile. Put directory back to original state. "
 	@echo  "								       "
 	@echo ==========================================================================
 
