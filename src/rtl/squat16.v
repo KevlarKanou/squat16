@@ -1,4 +1,4 @@
-`include "squart.vh"
+`include "../src/rtl/squat.vh"
 
 module squat16 (
     input                  clk                   ,
