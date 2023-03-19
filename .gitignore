@@ -13,3 +13,4 @@ sim/elabcomLog
 sim/novas.* 
 sim/*.dat 
 sim/DVEfiles
+sim/stack.info.*
