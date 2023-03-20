@@ -13,10 +13,21 @@ program automatic test
     bit [7:0] syndrome[0:255]      ;
     ATMCellType pkt_gen            ;
     ATMCellType pkt_exp            ;
+    ATMCellType pkt_expq[$]        ;
     ATMCellType pkt_cmp            ;
+
+    event       drv2gen            ;
+    event       gen_done           ;
+
+    // 报文数量
+    int         nCells             ;
+    int         nCells_running     ;
 
     initial begin
 
+        nCells = 4 ;
+        nCells_running = nCells ;
+        
         $display("###################################################################");
         $display("##################  Program Start !!!!!! ##########################");
         $display("###################################################################");
@@ -24,9 +35,14 @@ program automatic test
         reset();
         CPU_driver();
 
-        gen();
-        send();
-        receive();
+        fork 
+            gen();
+            send();
+            receive();
+        join_none
+        wait_for_end();
+        // refmodel();
+        // check();
 
         $display("###################################################################");
         $display("##################  Program End  !!!!!!! ##########################");
@@ -257,38 +273,47 @@ program automatic test
 
     // 随机生成报文数据
     task gen();
-    
-        pkt_gen.uni.GFC = $urandom;
-        pkt_gen.uni.VPI = $urandom;
-        pkt_gen.uni.VCI = $urandom;
-        pkt_gen.uni.CLP = $urandom;
-        pkt_gen.uni.PT  = $urandom;
-        
-        generate_syndrome();
-        pkt_gen.uni.HEC = hec({pkt_gen.uni.GFC, pkt_gen.uni.VPI, pkt_gen.uni.VCI, pkt_gen.uni.CLP, pkt_gen.uni.PT});
+        repeat (nCells) begin
+            pkt_gen.uni.GFC = $urandom;
+            pkt_gen.uni.VPI = $urandom;
+            pkt_gen.uni.VCI = $urandom;
+            pkt_gen.uni.CLP = $urandom;
+            pkt_gen.uni.PT  = $urandom;
+            
+            generate_syndrome();
+            pkt_gen.uni.HEC = hec({pkt_gen.uni.GFC, pkt_gen.uni.VPI, pkt_gen.uni.VCI, pkt_gen.uni.CLP, pkt_gen.uni.PT});
 
-        for(int i=0; i<48;i=i+1) begin
-        pkt_gen.uni.Payload[i]= $urandom;
-            $display("... Payload Data is %h ............",pkt_gen.uni.Payload[i]);
+            for(int i=0; i<48;i=i+1) begin
+            pkt_gen.uni.Payload[i]= $urandom;
+                $display("... Payload Data is %h ............",pkt_gen.uni.Payload[i]);
+            end
+            nCells_running = nCells_running - 1;
+            @drv2gen;
         end
-
+            ->gen_done ;
     endtask
 
     // 数据送入 Rx[0]
     task send();
+    forever begin  
+        while(nCells_running >0) begin
 
-        @(Rx[0].cbr);
-        Rx[0].cbr.clav <= 1;
-        for (int i=0; i<=52; i++) begin
-                while (Rx[0].cbr.en === 1'b0) @(Rx[0].cbr);
-                Rx[0].cbr.soc  <= (i == 0);
-                Rx[0].cbr.data <= pkt_gen.Mem[i];
-                @(Rx[0].cbr);
-            end
-        repeat (2) @(negedge clk)  ;
+            @(Rx[0].cbr);
+            Rx[0].cbr.clav <= 1;
+            for (int i=0; i<=52; i++) begin
+                    while (Rx[0].cbr.en === 1'b0) @(Rx[0].cbr);
+                    Rx[0].cbr.soc  <= (i == 0);
+                    Rx[0].cbr.data <= pkt_gen.Mem[i];
+                    @(Rx[0].cbr);
+                end
+            refmodel();
+            ->drv2gen;
+        end
+        repeat (1) @(negedge clk)  ;
         Rx[0].cbr.soc  <= 0    ;
         Rx[0].cbr.data <= 8'b0 ;
         Rx[0].cbr.clav <= 1    ;
+    end
     endtask
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -299,19 +324,64 @@ program automatic test
         int j = 0 ;
         Tx[3].cbt.clav <= 1;
         
-        wait(Tx[3].cbt.en);
-        wait(Tx[3].cbt.soc);
-        while (j<=52) begin
-            if (Tx[3].cbt.en == 1'b1)begin
-                pkt_cmp.Mem[j] = Tx[3].cbt.data ;
+        forever begin  
+            wait(Tx[3].cbt.en);
+            wait(Tx[3].cbt.soc);
+            while (j<=52) begin
+                if (Tx[3].cbt.en == 1'b1)begin
+                    pkt_cmp.Mem[j] = Tx[3].cbt.data ;
+                    @(Tx[3].cbt);
+                    j = j + 1 ;
+                end
+                else begin 
                 @(Tx[3].cbt);
-                j = j + 1 ;
+                end
             end
-            else begin 
-                @(Tx[3].cbt);
+            repeat (2) @(posedge clk);
+            check();
+            j=0;
+        end
+    endtask : receive
+
+    // 将产生的 UNI 报文队列转换成期望的 NNI 报文队列
+    function void refmodel ();
+        CellCfgType CellFwd_ref;
+        CellFwd_ref = lookup[pkt_gen.uni.VPI] ;
+        pkt_exp = pkt_gen;
+        pkt_exp.nni.VPI= CellFwd_ref.VPI ;
+        generate_syndrome();
+        pkt_exp.nni.HEC = hec(pkt_exp.Mem[0:3]);
+        pkt_expq.push_back(pkt_exp);
+    endfunction
+
+    function bit compare(ref string message);
+        foreach(pkt_expq[i]) begin
+            if(pkt_expq[i] == pkt_cmp) begin
+                message = "Successfully Compared";
+                pkt_expq.delete(i);
+                return(1);
             end
         end
-        repeat (2) @(posedge clk);
-    endtask : receive
+
+        $display("------------------compare is FAIL------------------------");
+        message = "Error, receive packet dismatch send Packet:\n";
+        return (0);
+
+    endfunction: compare
+
+    function void check();
+        string message;
+        static int pkts_checked = 0;
+        if (!compare(message)) begin
+            $display("\n%m\n[ERROR]%t Packet #%0d %s\n", $realtime, pkts_checked, message);
+            $finish;
+        end
+        $display("[NOTE]%t Packet #%0d %s", $realtime, pkts_checked++, message);
+    endfunction: check
+
+    task wait_for_end();
+        wait(gen_done.triggered);
+        repeat(5000) @(clk);
+    endtask: wait_for_end
 
 endprogram
