@@ -1,3 +1,5 @@
+`include "definitions.sv"
+`include "atm_cell.sv"
 
 program automatic test
     #(parameter int NumRx = 4, parameter int NumTx = 4)(
@@ -7,42 +9,89 @@ program automatic test
         input logic clk, rst_n
     );
 
-    CellCfgType lookup [255:0]; // copy of look-up table
-    bit [NumTx-1:0] fwd;
+    `include "generator.sv"
+    `include "driver.sv"
+    `include "monitor.sv"
+    `include "cpu_driver.sv"
+    
+    virtual Utopia.TB_Rx vRx[0:NumRx-1];
+    virtual Utopia.TB_Tx vTx[0:NumTx-1];
 
-    bit [7:0] syndrome[0:255]      ;
-    ATMCellType pkt_gen            ;
-    ATMCellType pkt_exp            ;
-    ATMCellType pkt_expq[$]        ;
-    ATMCellType pkt_cmp            ;
+    UNI_generator gen;
+    mailbox gen2drv;
+    event   drv2gen;
+    Driver drv;
+    Monitor mon;
+    //Scoreboard scb;
+    int numRx, numTx;
+    CPU_driver cpu;
 
-    event       drv2gen            ;
-    event       gen_done           ;
-
+    NNI_cell expect_cells[$]       ;
     // 报文数量
     int         nCells             ;
-    int         nCells_running     ;
+    // int         nCells_running     ;
 
     initial begin
 
+        vTx[0] = Tx[0];
+        vTx[1] = Tx[1];
+        vTx[2] = Tx[2];
+        vTx[3] = Tx[3];
+        vTx[4] = Tx[4];
+        vTx[5] = Tx[5];
+        vTx[6] = Tx[6];
+        vTx[7] = Tx[7];
+        vTx[8] = Tx[8];
+        vTx[9] = Tx[9];
+        vTx[10] = Tx[10];
+        vTx[11] = Tx[11];
+        vTx[12] = Tx[12];
+        vTx[13] = Tx[13];
+        vTx[14] = Tx[14];
+        vTx[15] = Tx[15];
+
+        vRx[0] = Rx[0];
+        vRx[1] = Rx[1];
+        vRx[2] = Rx[2];
+        vRx[3] = Rx[3];      
+        vRx[4] = Rx[4];
+        vRx[5] = Rx[5];
+        vRx[6] = Rx[6];
+        vRx[7] = Rx[7];
+        vRx[8] = Rx[8];
+        vRx[9] = Rx[9];
+        vRx[10] = Rx[10];
+        vRx[11] = Rx[11];
+        vRx[12] = Rx[12];
+        vRx[13] = Rx[13];
+        vRx[14] = Rx[14];
+        vRx[15] = Rx[15];
+
         nCells = 4 ;
-        nCells_running = nCells ;
+        // nCells_running = nCells ;
         
+        cpu = new(mif);
+        
+        gen2drv = new();
+        gen = new(gen2drv, drv2gen, nCells, 0);	
+        drv = new(gen2drv, drv2gen, vRx[0], 0);
+        mon = new(vTx[3], 3);
+
         $display("###################################################################");
         $display("##################  Program Start !!!!!! ##########################");
         $display("###################################################################");
 
         reset();
-        CPU_driver();
+
+        cpu.run();
 
         fork 
-            gen();
-            send();
-            receive();
+            gen.run();
+            drv.run();
+            mon.run();
         join_none
+
         wait_for_end();
-        // refmodel();
-        // check();
 
         $display("###################################################################");
         $display("##################  Program End  !!!!!!! ##########################");
@@ -181,207 +230,57 @@ program automatic test
 
     endtask: reset
 
-    task Initialize_Host ();
-        mif.BusMode <= 1;
-        mif.Addr <= 0;
-        mif.DataIn <= 0;
-        mif.Sel <= 1;
-        mif.Rd_DS <= 1;
-        mif.Wr_RW <= 1;
-    endtask : Initialize_Host
+    function void refmodel (input UNI_cell ucell);
 
+        CellCfgType CellFwd = cpu.lookup[ucell.VPI] ;
+        NNI_cell u2ncell;
+        u2ncell = new();
+        u2ncell = ucell.to_NNI(CellFwd.VPI);
 
-    task HostWrite (int a, CellCfgType d); // configure
-        #10 mif.Addr <= a; mif.DataIn <= d; mif.Sel <= 0;
-        #10 mif.Wr_RW <= 0;
-        while (mif.Rdy_Dtack!==0) #10;
-        #10 mif.Wr_RW <= 1; mif.Sel <= 1;
-        while (mif.Rdy_Dtack==0) #10;
-    endtask : HostWrite
+        expect_cells.push_back(u2ncell);
 
-
-    task HostRead (int a, output CellCfgType d);
-        #10 mif.Addr <= a; mif.Sel <= 0;
-        #10 mif.Rd_DS <= 0;
-        while (mif.Rdy_Dtack!==0) #10;
-        #10 d = mif.DataOut; mif.Rd_DS <= 1; mif.Sel <= 1;
-        while (mif.Rdy_Dtack==0) #10;
-    endtask : HostRead
-
-
-    task CPU_driver();
-        CellCfgType CellFwd;
-        Initialize_Host();
-
-        // Configure through Host interface
-        // 随机生成转发表
-        repeat (10) @(negedge clk);
-        $write("Memory: Loading ... ");
-        for (int i=0; i<=255; i++) begin
-            // CellFwd.FWD = $urandom();
-            
-            // 固定从 TX[3] 发送
-            CellFwd.FWD = 16'b1000;
-            $display("CellFwd.FWD[%0d]=%0d (%0b)", i, CellFwd.FWD, CellFwd.FWD);
-            CellFwd.VPI = i;
-            HostWrite(i, CellFwd);
-            lookup[i] = CellFwd;
-        end
-
-        // Verify memory
-        $write("Verifying ...");
-        for (int i=0; i<=255; i++) begin
-            HostRead(i, CellFwd);
-            if (lookup[i] != CellFwd) begin
-                $display("FATAL, Mem Location 0x%x contains 0x%x, expected 0x%x",
-                        i, CellFwd, lookup[i]);
-                $finish;
-            end
-        end
-        $display("Verified");
-
-    endtask : CPU_driver
-
-    // 生成校验子
-    function void generate_syndrome();
-        bit [7:0] sndrm;
-        for (int i = 0; i < 256; i = i + 1 ) begin
-            sndrm = i;
-            repeat (8) begin
-                if (sndrm[7] === 1'b1)
-                sndrm = (sndrm << 1) ^ 8'h07;
-                else
-                sndrm = sndrm << 1;
-            end
-            syndrome[i] = sndrm;
-        end
-    endfunction : generate_syndrome
-
-    //---------------------------------------------------------------------------
-    // Function to compute the HEC value
-    // 计算 HEC
-    function bit [7:0] hec (bit [31:0] hdr);
-        bit [7:0] heca;
-        heca = 8'h00;
-        repeat (4) begin
-            heca = syndrome[heca ^ hdr[31:24]];
-            hdr = hdr << 8;
-        end
-        heca = heca ^ 8'h55;
-        return heca;
-    endfunction : hec
-
-    // 随机生成报文数据
-    task gen();
-        repeat (nCells) begin
-            pkt_gen.uni.GFC = $urandom;
-            pkt_gen.uni.VPI = $urandom;
-            pkt_gen.uni.VCI = $urandom;
-            pkt_gen.uni.CLP = $urandom;
-            pkt_gen.uni.PT  = $urandom;
-            
-            generate_syndrome();
-            pkt_gen.uni.HEC = hec({pkt_gen.uni.GFC, pkt_gen.uni.VPI, pkt_gen.uni.VCI, pkt_gen.uni.CLP, pkt_gen.uni.PT});
-
-            for(int i=0; i<48;i=i+1) begin
-            pkt_gen.uni.Payload[i]= $urandom;
-                $display("... Payload Data is %h ............",pkt_gen.uni.Payload[i]);
-            end
-            nCells_running = nCells_running - 1;
-            @drv2gen;
-        end
-            ->gen_done ;
-    endtask
-
-    // 数据送入 Rx[0]
-    task send();
-    forever begin  
-        while(nCells_running >0) begin
-
-            @(Rx[0].cbr);
-            Rx[0].cbr.clav <= 1;
-            for (int i=0; i<=52; i++) begin
-                    while (Rx[0].cbr.en === 1'b0) @(Rx[0].cbr);
-                    Rx[0].cbr.soc  <= (i == 0);
-                    Rx[0].cbr.data <= pkt_gen.Mem[i];
-                    @(Rx[0].cbr);
-                end
-            refmodel();
-            ->drv2gen;
-        end
-        repeat (1) @(negedge clk)  ;
-        Rx[0].cbr.soc  <= 0    ;
-        Rx[0].cbr.data <= 8'b0 ;
-        Rx[0].cbr.clav <= 1    ;
-    end
-    endtask
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // 存储 Tx[3]
-    task receive();
-
-        int j = 0 ;
-        Tx[3].cbt.clav <= 1;
-        
-        forever begin  
-            wait(Tx[3].cbt.en);
-            wait(Tx[3].cbt.soc);
-            while (j<=52) begin
-                if (Tx[3].cbt.en == 1'b1)begin
-                    pkt_cmp.Mem[j] = Tx[3].cbt.data ;
-                    @(Tx[3].cbt);
-                    j = j + 1 ;
-                end
-                else begin 
-                @(Tx[3].cbt);
-                end
-            end
-            repeat (2) @(posedge clk);
-            check();
-            j=0;
-        end
-    endtask : receive
-
-    // 将产生的 UNI 报文队列转换成期望的 NNI 报文队列
-    function void refmodel ();
-        CellCfgType CellFwd_ref;
-        CellFwd_ref = lookup[pkt_gen.uni.VPI] ;
-        pkt_exp = pkt_gen;
-        pkt_exp.nni.VPI= CellFwd_ref.VPI ;
-        generate_syndrome();
-        pkt_exp.nni.HEC = hec(pkt_exp.Mem[0:3]);
-        pkt_expq.push_back(pkt_exp);
     endfunction
 
-    function bit compare(ref string message);
-        foreach(pkt_expq[i]) begin
-            if(pkt_expq[i] == pkt_cmp) begin
+    function bit compare(ref string message,input NNI_cell ncell);
+        foreach(expect_cells[i]) begin
+            if(expect_cells[i].compare(ncell)) begin
                 message = "Successfully Compared";
-                pkt_expq.delete(i);
+                expect_cells.delete(i);
                 return(1);
             end
         end
-
         $display("------------------compare is FAIL------------------------");
         message = "Error, receive packet dismatch send Packet:\n";
         return (0);
 
     endfunction: compare
 
-    function void check();
+    function void check(input NNI_cell ncell);
+
         string message;
         static int pkts_checked = 0;
-        if (!compare(message)) begin
+
+        if (!compare(message,ncell)) begin
             $display("\n%m\n[ERROR]%t Packet #%0d %s\n", $realtime, pkts_checked, message);
             $finish;
         end
         $display("[NOTE]%t Packet #%0d %s", $realtime, pkts_checked++, message);
+
     endfunction: check
 
     task wait_for_end();
-        wait(gen_done.triggered);
+        
+        fork : timeout_block
+            wait(gen.gen_done.triggered);
+            begin
+                repeat (1_000_000) @(Rx[0].cbr);
+                $display("@%0t: %m ERROR: Timeout while waiting for generators to finish", $time);
+            end
+        join_any
+        disable timeout_block;
+
         repeat(5000) @(clk);
+
     endtask: wait_for_end
 
 endprogram
