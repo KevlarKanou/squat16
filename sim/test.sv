@@ -12,23 +12,82 @@ program automatic test
     `include "generator.sv"
     `include "driver.sv"
     `include "monitor.sv"
+    `include "scoreboard.sv"
     `include "cpu_driver.sv"
-    
+    `include "coverage.sv"
+
+    /////////////////////////////////////////////////////////
+    // Call scoreboard from Driver using callbacks
+    /////////////////////////////////////////////////////////
+    class Scb_Driver_cbs extends Driver_cbs;
+        Scoreboard scb;
+
+        function new(Scoreboard scb);
+            this.scb = scb;
+        endfunction : new
+
+        // Send received cell to scoreboard
+        virtual task post_tx(input Driver drv,
+                        input UNI_cell ucell);
+            scb.save_expected(ucell);
+        endtask : post_tx
+    endclass : Scb_Driver_cbs
+
+
+    /////////////////////////////////////////////////////////
+    // Call scoreboard from Monitor using callbacks
+    /////////////////////////////////////////////////////////
+    class Scb_Monitor_cbs extends Monitor_cbs;
+        Scoreboard scb;
+
+        function new(Scoreboard scb);
+            this.scb = scb;
+        endfunction : new
+
+        // Send received cell to scoreboard
+        virtual task post_rx(input Monitor mon,
+                        input NNI_cell ncell);
+            scb.check_actual(ncell, mon.PortID);
+        endtask : post_rx
+    endclass : Scb_Monitor_cbs
+
+    /////////////////////////////////////////////////////////
+    // Call coverage from Monitor using callbacks
+    /////////////////////////////////////////////////////////
+    class Cov_Monitor_cbs extends Monitor_cbs;
+        Coverage cov;
+
+        function new(Coverage cov);
+            this.cov = cov;
+        endfunction : new
+
+        // Send received cell to coverage
+        virtual task post_rx(input Monitor mon,
+                        input NNI_cell ncell);
+            // CellCfgType CellCfg = top.squat.fwdtable.lut.read(ncell.VPI);
+            CellCfgType CellCfg = top.squat16.fwdtable.lut.Mem[ncell.VPI];
+            cov.sample(mon.PortID, CellCfg.FWD);
+        endtask : post_rx
+    endclass : Cov_Monitor_cbs
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
     virtual Utopia.TB_Rx vRx[0:NumRx-1];
     virtual Utopia.TB_Tx vTx[0:NumTx-1];
 
-    UNI_generator gen;
-    mailbox gen2drv;
-    event   drv2gen;
-    Driver drv;
-    Monitor mon;
-    //Scoreboard scb;
+    UNI_generator gen[];
+    mailbox gen2drv[];
+    event   drv2gen[];
+    Driver drv[];
+    Monitor mon[];
+    Coverage cov;
+    Scoreboard scb;
     int numRx, numTx;
     CPU_driver cpu;
 
     NNI_cell expect_cells[$]       ;
     // 报文数量
-    int         nCells             ;
+    int         nCells[]           ;
     // int         nCells_running     ;
 
     initial begin
@@ -67,15 +126,47 @@ program automatic test
         vRx[14] = Rx[14];
         vRx[15] = Rx[15];
 
-        nCells = 4 ;
-        // nCells_running = nCells ;
-        
         cpu = new(mif);
+
+        // gen2drv = new[NumRx];
+        // drv2gen = new[NumRx];
+        // gen=new[NumRx];
+        // drv=new[NumRx];
+
+        gen2drv = new[8];
+        drv2gen = new[8];
+        gen=new[8];
+        drv=new[8];
+
+        nCells = new[8];
+
+        foreach(gen[i]) begin
+            nCells[i] = $urandom_range(20,40);
+            $display("%h Port Send %h Packets",i,nCells[i]);
+            gen2drv[i] = new();
+            gen[i] = new(gen2drv[i], drv2gen[i], nCells[i], i);
+            drv[i] = new(gen2drv[i], drv2gen[i], vRx[i], i);
+        end
+
+        scb = new();
+        cov = new();
+        mon = new[NumTx];
+        // mon = new[4];
+        foreach (mon[i])
+            mon[i] = new(vTx[i], i);
         
-        gen2drv = new();
-        gen = new(gen2drv, drv2gen, nCells, 0);	
-        drv = new(gen2drv, drv2gen, vRx[0], 0);
-        mon = new(vTx[3], 3);
+        begin
+            Scb_Driver_cbs sdc = new(scb);
+            Scb_Monitor_cbs smc = new(scb);
+            foreach (drv[i]) drv[i].cbsq.push_back(sdc);  // Add scb to every driver
+            foreach (mon[i]) mon[i].cbsq.push_back(smc);  // Add scb to every monitor
+        end
+
+        // Connect coverage with callbacks
+        begin
+            Cov_Monitor_cbs smc = new(cov);
+            foreach (mon[i]) mon[i].cbsq.push_back(smc);  // Add cov to every monitor
+        end
 
         $display("###################################################################");
         $display("##################  Program Start !!!!!! ##########################");
@@ -85,11 +176,21 @@ program automatic test
 
         cpu.run();
 
-        fork 
-            gen.run();
-            drv.run();
-            mon.run();
-        join_none
+        foreach(gen[i])  begin
+            int j=i;
+            fork 
+                gen[j].run();
+                drv[j].run();
+            join_none
+        end
+
+        
+        foreach(mon[i]) begin
+            int j=i;
+            fork
+                mon[j].run();
+            join_none
+        end
 
         wait_for_end();
 
@@ -230,48 +331,13 @@ program automatic test
 
     endtask: reset
 
-    function void refmodel (input UNI_cell ucell);
-
-        CellCfgType CellFwd = cpu.lookup[ucell.VPI] ;
-        NNI_cell u2ncell;
-        u2ncell = new();
-        u2ncell = ucell.to_NNI(CellFwd.VPI);
-
-        expect_cells.push_back(u2ncell);
-
-    endfunction
-
-    function bit compare(ref string message,input NNI_cell ncell);
-        foreach(expect_cells[i]) begin
-            if(expect_cells[i].compare(ncell)) begin
-                message = "Successfully Compared";
-                expect_cells.delete(i);
-                return(1);
-            end
-        end
-        $display("------------------compare is FAIL------------------------");
-        message = "Error, receive packet dismatch send Packet:\n";
-        return (0);
-
-    endfunction: compare
-
-    function void check(input NNI_cell ncell);
-
-        string message;
-        static int pkts_checked = 0;
-
-        if (!compare(message,ncell)) begin
-            $display("\n%m\n[ERROR]%t Packet #%0d %s\n", $realtime, pkts_checked, message);
-            $finish;
-        end
-        $display("[NOTE]%t Packet #%0d %s", $realtime, pkts_checked++, message);
-
-    endfunction: check
-
     task wait_for_end();
         
         fork : timeout_block
-            wait(gen.gen_done.triggered);
+            begin
+                wait(cov.cov_done.triggered);
+            end
+
             begin
                 repeat (1_000_000) @(Rx[0].cbr);
                 $display("@%0t: %m ERROR: Timeout while waiting for generators to finish", $time);
