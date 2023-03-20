@@ -8,9 +8,22 @@ typedef class Monitor;
 
 
 /////////////////////////////////////////////////////////////////////////////
+// Monitor callback class
+// Simple callbacks that are called before and after a cell is transmitted
+// This class has empty tasks, which are used by default
+// A testcase can extend this class to inject new behavior in the monitor
+// without having to change any code in the monitor
+class Monitor_cbs;
+   virtual task post_rx(input Monitor mon,
+		                input NNI_cell ncell);
+   endtask : post_rx
+endclass : Monitor_cbs
+
+/////////////////////////////////////////////////////////////////////////////
 class Monitor;
 
     vUtopiaTx Tx;		// Virtual interface with output of DUT
+    Monitor_cbs cbsq[$];		// Queue of callback objects
     int PortID;
 
     extern function new(input vUtopiaTx Tx, input int PortID);
@@ -36,7 +49,9 @@ task Monitor::run();
         
     forever begin
         receive(ncell);
-        check(ncell);
+        // check(ncell);
+        foreach (cbsq[i])
+	        cbsq[i].post_rx(this, ncell);// Post-receive callback
     end
 endtask : run
 
