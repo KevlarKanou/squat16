@@ -667,8 +667,25 @@ module arbitor (
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
 
-    assign                 rx_sel_vld_0to7  = |rxreq_sel_vld[7:0]                    ;
-    assign                 rx_sel_vld_8to15 = |rxreq_sel_vld[15:8]                   ;
+    reg rx_sel_vld_0to7, rx_sel_vld_8to15;
+
+    // assign                 rx_sel_vld_0to7  = |rxreq_sel_vld[7:0]                    ;
+    // assign                 rx_sel_vld_8to15 = |rxreq_sel_vld[15:8]                   ;
+
+    always @(posedge clk , negedge rst_n) begin
+        if (~rst_n) begin
+            rx_sel_vld_0to7     <= 0;
+            rx_sel_vld_8to15    <= 0;
+        end
+        else if (s_state_rxvld) begin
+            rx_sel_vld_0to7     <= |rxreq_sel_vld[7:0];
+            rx_sel_vld_8to15    <= |rxreq_sel_vld[15:8];
+        end
+        else begin
+            rx_sel_vld_0to7     <= rx_sel_vld_0to7;
+            rx_sel_vld_8to15    <= rx_sel_vld_8to15;
+        end
+    end
 
     assign                 tx0_nni_VPI      = forward[0] ? arb_nni_VPI      : 'h0    ;
     assign                 tx0_nni_VCI      = forward[0] ? arb_nni_VCI      : 'h0    ;
