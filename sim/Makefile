@@ -1,6 +1,6 @@
 # Makefile for SystemVerilog Testbench Lab1
 RTL= ../src/rtl/hec_cal.v ../src/rtl/LookupTable.v ../src/rtl/utopia1_atm_rx.v ../src/rtl/utopia1_atm_tx.v ../src/rtl/FwdLkp.v ../src/rtl/arbitor.v ../src/rtl/squat16.v ../src/rtl/squat.vh
-SVTB = ./top.sv ./cpu_ifc.sv ./Utopia.sv ./test.sv ./scoreboard.sv
+SVTB = ./top.sv ./cpu_ifc.sv ./Utopia.sv ./test.sv ./scoreboard.sv ./coverage.sv
 seed = 1
 
 default: test 
