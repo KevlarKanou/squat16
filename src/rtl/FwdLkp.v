@@ -25,15 +25,15 @@ input           rst_n      ;
 input           BusMode    ; 
 input  [11:0]   Addr       ;
 input           Sel        ;
-input  [12+`CHANNEL_NUM-1:0]   DataIn     ; 
+input  [12+`PORT_NUM-1:0]   DataIn     ; 
 input           Rd_DS      ; 
 input           Wr_RW      ;
-output [12+`CHANNEL_NUM-1:0]   DataOut    ;
+output [12+`PORT_NUM-1:0]   DataOut    ;
 output          Rdy_Dtack  ;
 
 input           				fwd_rden   ;
 input  [7:0]    				fwd_addr   ;
-output [12+`CHANNEL_NUM-1:0]   	fwd_data   ;
+output [12+`PORT_NUM-1:0]   	fwd_data   ;
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -47,8 +47,8 @@ output [12+`CHANNEL_NUM-1:0]   	fwd_data   ;
 			    
   wire          			  Rdy_Dtack  = (host_wren || host_rden) ? 1'b0 : 1'b1 ;
   wire  [7:0]   			  host_addr  = Addr[7:0]  ;
-  wire  [12+`CHANNEL_NUM-1:0] host_wdata = DataIn     ;
-  wire  [12+`CHANNEL_NUM-1:0] host_rdata              ;
+  wire  [12+`PORT_NUM-1:0] host_wdata = DataIn     ;
+  wire  [12+`PORT_NUM-1:0] host_rdata              ;
   assign        			  DataOut    = host_rdata ;
   
 

@@ -20,17 +20,17 @@ input               			rst_n        ;
 input               			host_wren    ;
 input               			host_rden    ;
 input    [7:0]      			host_addr    ;
-input    [12+`CHANNEL_NUM-1:0]  host_wdata   ;
-output   [12+`CHANNEL_NUM-1:0] 	host_rdata   ;
+input    [12+`PORT_NUM-1:0]  host_wdata   ;
+output   [12+`PORT_NUM-1:0] 	host_rdata   ;
 input               			fwd_rden     ;
 input    [7:0]      			fwd_addr     ;
-output   [12+`CHANNEL_NUM-1:0]  fwd_rdata    ;
+output   [12+`PORT_NUM-1:0]  fwd_rdata    ;
 
 //////////////////////////////////////////////////////
                    
 parameter  Arange = 1<<Asize;
 
-reg   [12+`CHANNEL_NUM:0] Mem [0:Arange-1];
+reg   [12+`PORT_NUM:0] Mem [0:Arange-1];
 integer i;
 always@(posedge clk or negedge rst_n)
       if(~rst_n) begin

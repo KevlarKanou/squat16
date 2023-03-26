@@ -6,7 +6,7 @@ module arbitor (
 
         output			                        fwd_rden           ,
         output	[7:0]                           fwd_addr           ,
-        input	[12+`CHANNEL_NUM-1:0]	        fwd_data           ,
+        input	[12+`PORT_NUM-1:0]	        fwd_data           ,
 
         input			       rx0_rxreq          ,
         output	reg		       rx0_rxack          ,
@@ -344,8 +344,8 @@ module arbitor (
     reg    [2:0]                SquatState     ;
     wire                        uni_hec_err    ;
     wire                        tx_fwd_done    ;
-    wire   [`CHANNEL_NUM-1:0]   rxreq_arb      ;
-    wire   [`CHANNEL_NUM-1:0]   forward        ;
+    wire   [`PORT_NUM-1:0]   rxreq_arb      ;
+    wire   [`PORT_NUM-1:0]   forward        ;
 
     always @(posedge clk or negedge rst_n)
         if(~rst_n)
@@ -392,12 +392,12 @@ module arbitor (
     ////////////////////////////////////////////////////////////////////////////////////
 
     // rxreq_sel 用作轮询掩码，每拍查找一位rx的请求
-    reg      [`CHANNEL_NUM-1:0]        rxreq_sel ;
+    reg      [`PORT_NUM-1:0]        rxreq_sel ;
     always@(posedge clk or negedge rst_n)
         if(~rst_n)
-            rxreq_sel <= `CHANNEL_NUM'h1 ;
+            rxreq_sel <= `PORT_NUM'h1 ;
         else if(s_state_rxvld)
-            rxreq_sel <= {rxreq_sel[`CHANNEL_NUM-2:0],rxreq_sel[`CHANNEL_NUM-1]} ;
+            rxreq_sel <= {rxreq_sel[`PORT_NUM-2:0],rxreq_sel[`PORT_NUM-1]} ;
 
     // rxreq_arb 是掩码结果
     assign rxreq_arb = rxreq_sel & {rx15_rxreq,rx14_rxreq,rx13_rxreq,rx12_rxreq,
@@ -408,7 +408,7 @@ module arbitor (
     ////////////////////////////////////////////////////////////////////////////////////
 
     // FSM 位于 wait_rx_valid 状态时，rxreq_sel_vld 有效
-    wire       [`CHANNEL_NUM-1:0]       rxreq_sel_vld = rxreq_arb & {`CHANNEL_NUM{s_state_rxvld}} ;
+    wire       [`PORT_NUM-1:0]       rxreq_sel_vld = rxreq_arb & {`PORT_NUM{s_state_rxvld}} ;
 
     ////////////////////////////////////////////////////////////////////////////////////
     reg        [3:0]       arb_uni_GFC     ;
@@ -438,7 +438,7 @@ module arbitor (
 
     always @(*) begin
         case (rxreq_sel_vld)
-            `CHANNEL_NUM'h1: begin
+            `PORT_NUM'h1: begin
                 nxt_arb_uni_GFC     = rx0_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx0_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx0_uni_VCI     ;
@@ -447,7 +447,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx0_uni_HEC     ;
                 nxt_arb_uni_Payload = rx0_uni_Payload ;
             end
-            `CHANNEL_NUM'h2: begin
+            `PORT_NUM'h2: begin
                 nxt_arb_uni_GFC     = rx1_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx1_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx1_uni_VCI     ;
@@ -456,7 +456,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx1_uni_HEC     ;
                 nxt_arb_uni_Payload = rx1_uni_Payload ;
             end
-            `CHANNEL_NUM'h4: begin
+            `PORT_NUM'h4: begin
                 nxt_arb_uni_GFC     = rx2_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx2_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx2_uni_VCI     ;
@@ -465,7 +465,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx2_uni_HEC     ;
                 nxt_arb_uni_Payload = rx2_uni_Payload ;
             end
-            `CHANNEL_NUM'h8: begin
+            `PORT_NUM'h8: begin
                 nxt_arb_uni_GFC     = rx3_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx3_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx3_uni_VCI     ;
@@ -474,7 +474,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx3_uni_HEC     ;
                 nxt_arb_uni_Payload = rx3_uni_Payload ;
             end
-            `CHANNEL_NUM'h10: begin
+            `PORT_NUM'h10: begin
                 nxt_arb_uni_GFC     = rx4_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx4_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx4_uni_VCI     ;
@@ -483,7 +483,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx4_uni_HEC     ;
                 nxt_arb_uni_Payload = rx4_uni_Payload ;
             end
-            `CHANNEL_NUM'h20: begin
+            `PORT_NUM'h20: begin
                 nxt_arb_uni_GFC     = rx5_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx5_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx5_uni_VCI     ;
@@ -492,7 +492,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx5_uni_HEC     ;
                 nxt_arb_uni_Payload = rx5_uni_Payload ;
             end
-            `CHANNEL_NUM'h40: begin
+            `PORT_NUM'h40: begin
                 nxt_arb_uni_GFC     = rx6_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx6_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx6_uni_VCI     ;
@@ -501,7 +501,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx6_uni_HEC     ;
                 nxt_arb_uni_Payload = rx6_uni_Payload ;
             end
-            `CHANNEL_NUM'h80: begin
+            `PORT_NUM'h80: begin
                 nxt_arb_uni_GFC     = rx7_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx7_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx7_uni_VCI     ;
@@ -510,7 +510,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx7_uni_HEC     ;
                 nxt_arb_uni_Payload = rx7_uni_Payload ;
             end
-            `CHANNEL_NUM'h100: begin
+            `PORT_NUM'h100: begin
                 nxt_arb_uni_GFC     = rx8_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx8_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx8_uni_VCI     ;
@@ -519,7 +519,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx8_uni_HEC     ;
                 nxt_arb_uni_Payload = rx8_uni_Payload ;
             end
-            `CHANNEL_NUM'h200: begin
+            `PORT_NUM'h200: begin
                 nxt_arb_uni_GFC     = rx9_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx9_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx9_uni_VCI     ;
@@ -528,7 +528,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx9_uni_HEC     ;
                 nxt_arb_uni_Payload = rx9_uni_Payload ;
             end
-            `CHANNEL_NUM'h400: begin
+            `PORT_NUM'h400: begin
                 nxt_arb_uni_GFC     = rx10_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx10_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx10_uni_VCI     ;
@@ -537,7 +537,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx10_uni_HEC     ;
                 nxt_arb_uni_Payload = rx10_uni_Payload ;
             end
-            `CHANNEL_NUM'h800: begin
+            `PORT_NUM'h800: begin
                 nxt_arb_uni_GFC     = rx11_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx11_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx11_uni_VCI     ;
@@ -546,7 +546,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx11_uni_HEC     ;
                 nxt_arb_uni_Payload = rx11_uni_Payload ;
             end
-            `CHANNEL_NUM'h1000: begin
+            `PORT_NUM'h1000: begin
                 nxt_arb_uni_GFC     = rx12_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx12_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx12_uni_VCI     ;
@@ -555,7 +555,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx12_uni_HEC     ;
                 nxt_arb_uni_Payload = rx12_uni_Payload ;
             end
-            `CHANNEL_NUM'h2000: begin
+            `PORT_NUM'h2000: begin
                 nxt_arb_uni_GFC     = rx13_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx13_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx13_uni_VCI     ;
@@ -564,7 +564,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx13_uni_HEC     ;
                 nxt_arb_uni_Payload = rx13_uni_Payload ;
             end
-            `CHANNEL_NUM'h4000: begin
+            `PORT_NUM'h4000: begin
                 nxt_arb_uni_GFC     = rx14_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx14_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx14_uni_VCI     ;
@@ -573,7 +573,7 @@ module arbitor (
                 nxt_arb_uni_HEC     = rx14_uni_HEC     ;
                 nxt_arb_uni_Payload = rx14_uni_Payload ;
             end
-            `CHANNEL_NUM'h8000: begin
+            `PORT_NUM'h8000: begin
                 nxt_arb_uni_GFC     = rx15_uni_GFC     ;
                 nxt_arb_uni_VPI     = rx15_uni_VPI     ;
                 nxt_arb_uni_VCI     = rx15_uni_VCI     ;
@@ -617,8 +617,8 @@ module arbitor (
     ////////////////////////////////////////////////////////////////////////////////////
     assign   fwd_addr = nxt_arb_uni_VPI ;
     assign   fwd_rden = |rxreq_sel_vld  ;
-    reg      [12+`CHANNEL_NUM-1:0] fwd_data_reg ;
-    wire     [12+`CHANNEL_NUM-1:0] nxt_fwd_data = fwd_rden ? fwd_data : fwd_data_reg ;
+    reg      [12+`PORT_NUM-1:0] fwd_data_reg ;
+    wire     [12+`PORT_NUM-1:0] nxt_fwd_data = fwd_rden ? fwd_data : fwd_data_reg ;
     always@(posedge clk or negedge rst_n)
         if(~rst_n)
             fwd_data_reg <= 16'h0 ;
@@ -638,7 +638,7 @@ module arbitor (
 
     // forward 标识发送端口，为 0 则丢弃报文
     // 支持类 UDP
-    assign                 forward          = fwd_data_reg[12+`CHANNEL_NUM-1:12] ;
+    assign                 forward          = fwd_data_reg[12+`PORT_NUM-1:12] ;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
 

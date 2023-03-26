@@ -2,6 +2,6 @@
 
 `define __SQUAT_HEADER__
 
-`define CHANNEL_NUM 16
+`define PORT_NUM 16
 
 `endif
