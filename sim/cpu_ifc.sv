@@ -6,7 +6,7 @@
 
 interface cpu_ifc;
   logic        BusMode;
-  logic [11:0] Addr;
+  logic [23:0] Addr;
   logic        Sel;
   CellCfgType  DataIn;
   CellCfgType  DataOut;

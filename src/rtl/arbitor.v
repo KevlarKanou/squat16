@@ -4,9 +4,9 @@ module arbitor (
         input                  clk                ,
         input                  rst_n              ,
 
-        output			                        fwd_rden           ,
-        output	[7:0]                           fwd_addr           ,
-        input	[12+`PORT_NUM-1:0]	        fwd_data           ,
+        output			           fwd_rden       ,
+        output	[23:0]             fwd_addr       ,
+        input	[`PORT_NUM+28-1:0] fwd_data       ,
 
         input			       rx0_rxreq          ,
         output	reg		       rx0_rxack          ,
@@ -50,7 +50,7 @@ module arbitor (
 
         input                  rx4_rxreq          ,
         output  reg            rx4_rxack          ,
-        input   [4:0]          rx4_uni_GFC        ,
+        input   [3:0]          rx4_uni_GFC        ,
         input   [7:0]          rx4_uni_VPI        ,
         input   [15:0]         rx4_uni_VCI        ,
         input                  rx4_uni_CLP        ,
@@ -61,7 +61,7 @@ module arbitor (
 
         input                  rx5_rxreq          ,
         output  reg            rx5_rxack          ,
-        input   [5:0]          rx5_uni_GFC        ,
+        input   [3:0]          rx5_uni_GFC        ,
         input   [7:0]          rx5_uni_VPI        ,
         input   [15:0]         rx5_uni_VCI        ,
         input                  rx5_uni_CLP        ,
@@ -72,7 +72,7 @@ module arbitor (
 
         input                  rx6_rxreq          ,
         output  reg            rx6_rxack          ,
-        input   [6:0]          rx6_uni_GFC        ,
+        input   [3:0]          rx6_uni_GFC        ,
         input   [7:0]          rx6_uni_VPI        ,
         input   [15:0]         rx6_uni_VCI        ,
         input                  rx6_uni_CLP        ,
@@ -83,7 +83,7 @@ module arbitor (
 
         input                  rx7_rxreq          ,
         output  reg            rx7_rxack          ,
-        input   [7:0]          rx7_uni_GFC        ,
+        input   [3:0]          rx7_uni_GFC        ,
         input   [7:0]          rx7_uni_VPI        ,
         input   [15:0]         rx7_uni_VCI        ,
         input                  rx7_uni_CLP        ,
@@ -93,7 +93,7 @@ module arbitor (
 
         input                  rx8_rxreq          ,
         output  reg            rx8_rxack          ,
-        input   [7:0]          rx8_uni_GFC        ,
+        input   [3:0]          rx8_uni_GFC        ,
         input   [7:0]          rx8_uni_VPI        ,
         input   [15:0]         rx8_uni_VCI        ,
         input                  rx8_uni_CLP        ,
@@ -104,7 +104,7 @@ module arbitor (
 
         input                  rx9_rxreq          ,
         output  reg            rx9_rxack          ,
-        input   [7:0]          rx9_uni_GFC        ,
+        input   [3:0]          rx9_uni_GFC        ,
         input   [7:0]          rx9_uni_VPI        ,
         input   [15:0]         rx9_uni_VCI        ,
         input                  rx9_uni_CLP        ,
@@ -115,7 +115,7 @@ module arbitor (
 
         input                  rx10_rxreq          ,
         output  reg            rx10_rxack          ,
-        input   [7:0]          rx10_uni_GFC        ,
+        input   [3:0]          rx10_uni_GFC        ,
         input   [7:0]          rx10_uni_VPI        ,
         input   [15:0]         rx10_uni_VCI        ,
         input                  rx10_uni_CLP        ,
@@ -126,7 +126,7 @@ module arbitor (
 
         input                  rx11_rxreq          ,
         output  reg            rx11_rxack          ,
-        input   [7:0]          rx11_uni_GFC        ,
+        input   [3:0]          rx11_uni_GFC        ,
         input   [7:0]          rx11_uni_VPI        ,
         input   [15:0]         rx11_uni_VCI        ,
         input                  rx11_uni_CLP        ,
@@ -137,7 +137,7 @@ module arbitor (
 
         input                  rx12_rxreq          ,
         output  reg            rx12_rxack          ,
-        input   [7:0]          rx12_uni_GFC        ,
+        input   [3:0]          rx12_uni_GFC        ,
         input   [7:0]          rx12_uni_VPI        ,
         input   [15:0]         rx12_uni_VCI        ,
         input                  rx12_uni_CLP        ,
@@ -148,7 +148,7 @@ module arbitor (
 
         input                  rx13_rxreq          ,
         output  reg            rx13_rxack          ,
-        input   [7:0]          rx13_uni_GFC        ,
+        input   [3:0]          rx13_uni_GFC        ,
         input   [7:0]          rx13_uni_VPI        ,
         input   [15:0]         rx13_uni_VCI        ,
         input                  rx13_uni_CLP        ,
@@ -159,7 +159,7 @@ module arbitor (
 
         input                  rx14_rxreq          ,
         output  reg            rx14_rxack          ,
-        input   [7:0]          rx14_uni_GFC        ,
+        input   [3:0]          rx14_uni_GFC        ,
         input   [7:0]          rx14_uni_VPI        ,
         input   [15:0]         rx14_uni_VCI        ,
         input                  rx14_uni_CLP        ,
@@ -170,7 +170,7 @@ module arbitor (
 
         input                  rx15_rxreq          ,
         output  reg            rx15_rxack          ,
-        input   [7:0]          rx15_uni_GFC        ,
+        input   [3:0]          rx15_uni_GFC        ,
         input   [7:0]          rx15_uni_VPI        ,
         input   [15:0]         rx15_uni_VCI        ,
         input                  rx15_uni_CLP        ,
@@ -615,10 +615,10 @@ module arbitor (
         end
 
     ////////////////////////////////////////////////////////////////////////////////////
-    assign   fwd_addr = nxt_arb_uni_VPI ;
+    assign   fwd_addr = {nxt_arb_uni_VPI, nxt_arb_uni_VCI} ;
     assign   fwd_rden = |rxreq_sel_vld  ;
-    reg      [12+`PORT_NUM-1:0] fwd_data_reg ;
-    wire     [12+`PORT_NUM-1:0] nxt_fwd_data = fwd_rden ? fwd_data : fwd_data_reg ;
+    reg      [`PORT_NUM+28-1:0] fwd_data_reg ;
+    wire     [`PORT_NUM+28-1:0] nxt_fwd_data = fwd_rden ? fwd_data : fwd_data_reg ;
     always@(posedge clk or negedge rst_n)
         if(~rst_n)
             fwd_data_reg <= 16'h0 ;
@@ -629,16 +629,15 @@ module arbitor (
 
     reg        [7:0]       hec_nni ;
 
-    wire       [11:0]      arb_nni_VPI      = fwd_data_reg[11:0]  ;
-    wire       [15:0]      arb_nni_VCI      = arb_uni_VCI         ;
-    wire                   arb_nni_CLP      = arb_uni_CLP         ;
-    wire       [2:0]       arb_nni_PT       = arb_uni_PT          ;
-    wire       [7:0]       arb_nni_HEC      = hec_nni             ;
-    wire       [8*48-1:0]  arb_nni_Payload  = arb_uni_Payload     ;
+    wire       [11:0]      arb_nni_VPI      = fwd_data_reg[`NNIVPILoc]  ;
+    wire       [15:0]      arb_nni_VCI      = fwd_data_reg[`NNIVCILoc]  ;
+    wire                   arb_nni_CLP      = arb_uni_CLP               ;
+    wire       [2:0]       arb_nni_PT       = arb_uni_PT                ;
+    wire       [7:0]       arb_nni_HEC      = hec_nni                   ;
+    wire       [8*48-1:0]  arb_nni_Payload  = arb_uni_Payload           ;
 
     // forward 标识发送端口，为 0 则丢弃报文
-    // 支持类 UDP
-    assign                 forward          = fwd_data_reg[12+`PORT_NUM-1:12] ;
+    assign                 forward          = fwd_data_reg[`ForwardLoc] ;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
 

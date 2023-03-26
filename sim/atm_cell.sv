@@ -21,7 +21,7 @@ class UNI_cell;
     extern function void generate_syndrome();
     extern function bit [7:0] hec (bit [31:0] hdr);
     extern virtual function void pack(output ATMCellType to);
-    extern function NNI_cell to_NNI(input bit [11:0] nni_VPI);
+    extern function NNI_cell to_NNI(input bit [11:0] nni_VPI, input bit [15:0] nni_VCI);
     extern function UNI_cell copy();
     extern virtual function void display(input string prefix="");
 
@@ -83,13 +83,13 @@ endfunction : pack
 
 
 // Generate a NNI cell from an UNI cell - used in scoreboard
-function NNI_cell UNI_cell::to_NNI(input bit [11:0] nni_VPI);
+function NNI_cell UNI_cell::to_NNI(input bit [11:0] nni_VPI, input bit [15:0] nni_VCI);
     NNI_cell copy;
     
     copy = new();
     
-    copy.VPI     = nni_VPI     ;   // NNI has wider VPI
-    copy.VCI     = this.VCI;
+    copy.VPI     = nni_VPI;   // NNI has wider VPI
+    copy.VCI     = nni_VCI;
     copy.CLP     = this.CLP;
     copy.PT      = this.PT;
     copy.HEC     = this.HEC;

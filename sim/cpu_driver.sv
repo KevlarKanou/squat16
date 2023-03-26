@@ -4,11 +4,15 @@
 
 //`include "atm_cell.sv"
 //`include "cpu_ifc.sv"
-
+`define LKP_DEPTH   'hFFFFFF
+`define LKP_PART0   'h3FFFFF
+`define LKP_PART1   'h7FFFFF
+`define LKP_PART2   'hBFFFFF
+`define LKP_PART3   'hFFFFFF
 
 class CPU_driver;
     vCPU_T mif;
-    CellCfgType lookup [255:0]; // copy of look-up table
+    CellCfgType lookup [`LKP_DEPTH:0]; // copy of look-up table
     bit [NumTx-1:0] fwd;
 
     extern function new(vCPU_T mif);
@@ -67,20 +71,73 @@ task CPU_driver::run();
     // Configure through Host interface
     repeat (10) @(negedge clk);
     $write("Memory: Loading ... ");
-    for (int i=0; i<=255; i++) begin
+    for (int i=0; i<=`LKP_DEPTH; i++) begin
         // CellFwd.FWD = $urandom_range(1,15);
         // CellFwd.FWD = 16'b0;
         CellFwd.FWD = $urandom_range(0, 16'hFFFF);
         // CellFwd.FWD = $urandom % 'h10000;
         $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
-        CellFwd.VPI = i;
+        {CellFwd.VPI, CellFwd.VCI} = i;
         HostWrite(i, CellFwd);
         lookup[i] = CellFwd;
     end
+    // fork
+    //     begin
+    //         for (int i=0; i<=`LKP_PART0; i++) begin
+    //             // CellFwd.FWD = $urandom_range(1,15);
+    //             // CellFwd.FWD = 16'b0;
+    //             CellFwd.FWD = $urandom_range(0, 16'hFFFF);
+    //             // CellFwd.FWD = $urandom % 'h10000;
+    //             // $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
+    //             {CellFwd.VPI, CellFwd.VCI} = i;
+    //             HostWrite(i, CellFwd);
+    //             lookup[i] = CellFwd;
+    //         end
+    //     end
+
+    //     begin
+    //         for (int i=`LKP_PART0+1; i<=`LKP_PART1; i++) begin
+    //             // CellFwd.FWD = $urandom_range(1,15);
+    //             // CellFwd.FWD = 16'b0;
+    //             CellFwd.FWD = $urandom_range(0, 16'hFFFF);
+    //             // CellFwd.FWD = $urandom % 'h10000;
+    //             // $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
+    //             {CellFwd.VPI, CellFwd.VCI} = i;
+    //             HostWrite(i, CellFwd);
+    //             lookup[i] = CellFwd;
+    //         end
+    //     end
+
+    //     begin
+    //         for (int i=`LKP_PART1+1; i<=`LKP_PART2; i++) begin
+    //             // CellFwd.FWD = $urandom_range(1,15);
+    //             // CellFwd.FWD = 16'b0;
+    //             CellFwd.FWD = $urandom_range(0, 16'hFFFF);
+    //             // CellFwd.FWD = $urandom % 'h10000;
+    //             // $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
+    //             {CellFwd.VPI, CellFwd.VCI} = i;
+    //             HostWrite(i, CellFwd);
+    //             lookup[i] = CellFwd;
+    //         end
+    //     end
+
+    //     begin
+    //         for (int i=`LKP_PART2+1; i<=`LKP_PART3; i++) begin
+    //             // CellFwd.FWD = $urandom_range(1,15);
+    //             // CellFwd.FWD = 16'b0;
+    //             CellFwd.FWD = $urandom_range(0, 16'hFFFF);
+    //             // CellFwd.FWD = $urandom % 'h10000;
+    //             // $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
+    //             {CellFwd.VPI, CellFwd.VCI} = i;
+    //             HostWrite(i, CellFwd);
+    //             lookup[i] = CellFwd;
+    //         end
+    //     end
+    // join
 
     // Verify memory
     $write("Verifying ...");
-    for (int i=0; i<=255; i++) begin
+    for (int i=0; i<=`LKP_DEPTH; i++) begin
         HostRead(i, CellFwd);
         if (lookup[i] != CellFwd) begin
             $display("FATAL, Mem Location 0x%x contains 0x%x, expected 0x%x",
