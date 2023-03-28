@@ -59,7 +59,7 @@ function void Scoreboard::save_expected(UNI_cell ucell, int rxPortID);
     foreach(discard.Payload[i])
         discard.Payload[i]  = 0;
 
-    $display("@%0t: Scb save: VPI=%0x, VCI=%0x, Forward=%b", $time, CellFwd.VPI, CellFwd.VCI, CellFwd.FWD);
+    $display("@%0t: Scb save: NNI_VPI=%0x, NNI_VCI=%0x, rx=%d, Forward=%b", $time, CellFwd.VPI, CellFwd.VCI, rxPortID,CellFwd.FWD);
 
     for (int i=0; i<NumTx; i++)
         if (CellFwd.FWD[i]) begin

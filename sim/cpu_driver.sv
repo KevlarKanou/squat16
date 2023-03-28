@@ -76,7 +76,7 @@ task CPU_driver::run();
         // CellFwd.FWD = 16'b0;
         CellFwd.FWD = $urandom_range(0, 16'hFFFF);
         // CellFwd.FWD = $urandom % 'h10000;
-        $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
+        // $display("CellFwd.FWD[%0d]=%0d", i, CellFwd.FWD);
         {CellFwd.VPI, CellFwd.VCI} = i;
         HostWrite(i, CellFwd);
         lookup[i] = CellFwd;

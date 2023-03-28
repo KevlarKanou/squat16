@@ -2,7 +2,7 @@
 RTL= ../src/rtl/hec_cal.v ../src/rtl/LookupTable.v ../src/rtl/utopia1_atm_rx.v ../src/rtl/utopia1_atm_tx.v ../src/rtl/FwdLkp.v ../src/rtl/arbitor.v ../src/rtl/squat16.v ../src/rtl/squat.vh
 SVTB = ./top.sv ./cpu_ifc.sv ./Utopia.sv ./test.sv ./scoreboard.sv ./coverage.sv
 # seed = 1
-seed = $(shell date +%s)
+# seed = $(shell date +%s)
 
 default: test 
 
@@ -12,13 +12,19 @@ run:
 	./simv -l simv.log +ntb_random_seed=$(seed)
 
 compile:
-	vcs -full64 -l vcs.log -sverilog -kdb +lint=TFIPC-L -debug_access+all $(SVTB) $(RTL) +vcs+vcdpluson -lca
+	vcs -full64 -l vcs.log -sverilog -kdb +lint=TFIPC-L -debug_access+all $(SVTB) $(RTL) +vcs+vcdpluson -lca -fsdb
 
 verdi:
 	verdi -ssf novas.fsdb -undockWin -nologo &
 
 dve:
 	dve -vpd vcdplus.vpd &
+
+cov:
+	dve -covdir simv.vdb -full64 &
+
+urg:
+	urg -full64 -dir simv.vdb
 
 verdi_debug:
 	./simv -l simv.log -gui=verdi +ntb_random_seed=$(seed)
@@ -52,6 +58,9 @@ help:
 	@echo  " verdi      => Run verdi in post-processing mode.          "
 	@echo  " verdi_gui  => Run simulation interactively with verdi                  "
 	@echo  "               All verdi targets must have Verdi installed.          "
+	@echo  " cov	    => Analyze coverage             							"
+	@echo  " urg	    => Report coverage result             						"
+	
 	@echo  "                                                                       "
 	@echo  " debug      => Runs simulation interactively with dve.                  "
 	@echo  " clean      => Remove all intermediate simv and log files.             "

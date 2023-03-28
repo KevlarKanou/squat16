@@ -10,17 +10,32 @@ class Coverage;
     event cov_done;
     real coverage_result = 0.0;
 
+    // covergroup CG_Forward;
+
+    //     coverpoint src
+    //         {bins src[] = {[0:15]};
+    //         option.weight = 0;}
+    //     coverpoint fwd
+    //         {bins fwd[100] = {[1:16'hFFFF]};
+    //         option.weight = 0;}
+    //     cross src, fwd;
+
+    // endgroup : CG_Forward
+
     covergroup CG_Forward;
 
-        coverpoint src
-            {bins src[] = {[0:15]};
-            option.weight = 0;}
-        coverpoint fwd
-            {bins fwd[100] = {[0:16'hFFFF]};
-            option.weight = 0;}
-        cross src, fwd;
+        x_cp: coverpoint src;
+        y_cp: coverpoint fwd{
+           ignore_bins ign = {0};
+        }
+        x_y_cross : cross x_cp, y_cp{
+           ignore_bins ignore_fwd = x_y_cross with (((y_cp >> x_cp) & 1) == 0);
+           // Receiving data on a port indicates that fwd is 1 on the bit corresponding to that port.
+           // For those cases that are 0, we must ignore them, and the determination of whether
+           // they should not be received we do not make in coverage.
+        }
 
-    endgroup : CG_Forward
+   endgroup : CG_Forward
 
         // Instantiate the covergroup
     function new;
