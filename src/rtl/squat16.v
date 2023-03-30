@@ -5,14 +5,14 @@ module squat16 (
     input                  rst_n                 ,
     
 
-    input                               BusMode               , 
-    input      [11:0]                   Addr                  ,
-    input                               Sel                   ,
-    input      [12+`CHANNEL_NUM-1:0]    DataIn                , 
-    input                               Rd_DS                 , 
-    input                               Wr_RW                 ,
-    output     [12+`CHANNEL_NUM-1:0]    DataOut               ,
-    output                              Rdy_Dtack             ,
+    input                  BusMode               , 
+    input      [23:0]      Addr                  ,
+    input                  Sel                   ,
+    input      [`PORT_NUM+28-1:0]    DataIn      , 
+    input                  Rd_DS                 , 
+    input                  Wr_RW                 ,
+    output     [`PORT_NUM+28-1:0]    DataOut     ,
+    output                 Rdy_Dtack             ,
 
 
     input                  rx0_soc               ,
@@ -1195,8 +1195,8 @@ utopia1_atm_tx atm_tx15(
 /////////////////////////////////////////////////////////////////////////
 
 wire                                fwd_rden   ;
-wire         [7:0]                  fwd_addr   ;
-wire         [12+`CHANNEL_NUM-1:0]  fwd_data   ;
+wire         [23:0]                 fwd_addr   ;
+wire         [`PORT_NUM+28-1:0]     fwd_data   ;
 
 
 FwdLkp     fwdtable  (

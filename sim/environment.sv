@@ -196,11 +196,11 @@ task Environment::run();
    foreach(gen[i]) begin
       int j=i;		// Automatic variable to hold index in spawned threads
       fork
-	 begin
-	 if (cfg.in_use_Rx[j]) gen[j].run();	// Wait for generator to finish
-	    num_gen_running--;		// Decrement driver count
-	 end
-	 if (cfg.in_use_Rx[j]) drv[j].run();
+         begin
+            if (cfg.in_use_Rx[j]) gen[j].run();	// Wait for generator to finish
+               num_gen_running--;		// Decrement driver count
+         end
+         if (cfg.in_use_Rx[j]) drv[j].run();
       join_none
    end
 

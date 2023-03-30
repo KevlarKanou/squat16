@@ -39,16 +39,21 @@ endfunction // Scoreboard
 // 将 UNI 报文转成 NNI 报文
 // 并根据 lookup 表中的 FWD，保存到对应端口的 NNI 期望队列中
 
+// 可判断 UNI 报文来源
+
 function void Scoreboard::save_expected(UNI_cell ucell, int rxPortID);
 
-    CellCfgType CellFwd = env.cpu.lookup[ucell.VPI] ;
+    CellCfgType CellFwd = env.cpu.lookup[{ucell.VPI, ucell.VCI}] ;
     NNI_cell u2ncell;
     NNI_cell discard;
 
     u2ncell = new();
-    u2ncell = ucell.to_NNI(CellFwd.VPI);
+
+    // 模拟UNI转NNI，本测试平台全部透传
+    u2ncell = ucell.to_NNI(CellFwd.VPI, CellFwd.VCI);
 
     $display("@%0t: Scb save: VPI=%0x, Forward=%b", $time, CellFwd.VPI, CellFwd.FWD);
+
 
     for (int i=0; i<NumTx; i++)
         if (CellFwd.FWD[i]) begin
