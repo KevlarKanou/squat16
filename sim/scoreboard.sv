@@ -38,7 +38,9 @@ endfunction // Scoreboard
 //---------------------------------------------------------------------------
 // 将 UNI 报文转成 NNI 报文
 // 并根据 lookup 表中的 FWD，保存到对应端口的 NNI 期望队列中
+
 // 可判断 UNI 报文来源
+
 function void Scoreboard::save_expected(UNI_cell ucell, int rxPortID);
 
     CellCfgType CellFwd = env.cpu.lookup[{ucell.VPI, ucell.VCI}] ;
@@ -50,29 +52,16 @@ function void Scoreboard::save_expected(UNI_cell ucell, int rxPortID);
     // 模拟UNI转NNI，本测试平台全部透传
     u2ncell = ucell.to_NNI(CellFwd.VPI, CellFwd.VCI);
 
-    discard = new();
-    discard.VPI   = 0;
-    discard.VCI   = 0;
-    discard.CLP   = 0;
-    discard.PT    = 0;
-    discard.HEC   = 0;
-    foreach(discard.Payload[i])
-        discard.Payload[i]  = 0;
+    $display("@%0t: Scb save: VPI=%0x, Forward=%b", $time, CellFwd.VPI, CellFwd.FWD);
 
-    $display("@%0t: Scb save: NNI_VPI=%0x, NNI_VCI=%0x, rx=%d, Forward=%b", $time, CellFwd.VPI, CellFwd.VCI, rxPortID,CellFwd.FWD);
 
     for (int i=0; i<NumTx; i++)
         if (CellFwd.FWD[i]) begin
             if ((i == 0) || (i == 15) || ((i <= 7) && (rxPortID <= 7)) || ((i >= 8) && (rxPortID >=8))) begin
                 expect_cells[i].q.push_back(u2ncell); // Save cell in this forward queue
-                // expect_cells[i].iexpect++;
-                // iexpect++;
+                expect_cells[i].iexpect++;
+                iexpect++;
             end
-            else begin
-                expect_cells[i].q.push_back(discard);
-            end
-            expect_cells[i].iexpect++;
-            iexpect++;
         end
 	 
 endfunction : save_expected

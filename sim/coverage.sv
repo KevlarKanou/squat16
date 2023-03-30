@@ -16,7 +16,8 @@ class Coverage;
     //         {bins src[] = {[0:15]};
     //         option.weight = 0;}
     //     coverpoint fwd
-    //         {bins fwd[100] = {[1:16'hFFFF]};
+
+    //         {bins fwd[] = {[0:16'hFFFF]};
     //         option.weight = 0;}
     //     cross src, fwd;
 
@@ -33,6 +34,7 @@ class Coverage;
            // Receiving data on a port indicates that fwd is 1 on the bit corresponding to that port.
            // For those cases that are 0, we must ignore them, and the determination of whether
            // they should not be received we do not make in coverage.
+
         }
 
    endgroup : CG_Forward
