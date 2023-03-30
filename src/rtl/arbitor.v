@@ -50,7 +50,7 @@ module arbitor (
 
         input                  rx4_rxreq          ,
         output  reg            rx4_rxack          ,
-        input   [4:0]          rx4_uni_GFC        ,
+        input   [3:0]          rx4_uni_GFC        ,
         input   [7:0]          rx4_uni_VPI        ,
         input   [15:0]         rx4_uni_VCI        ,
         input                  rx4_uni_CLP        ,
@@ -61,7 +61,7 @@ module arbitor (
 
         input                  rx5_rxreq          ,
         output  reg            rx5_rxack          ,
-        input   [5:0]          rx5_uni_GFC        ,
+        input   [3:0]          rx5_uni_GFC        ,
         input   [7:0]          rx5_uni_VPI        ,
         input   [15:0]         rx5_uni_VCI        ,
         input                  rx5_uni_CLP        ,
@@ -72,7 +72,7 @@ module arbitor (
 
         input                  rx6_rxreq          ,
         output  reg            rx6_rxack          ,
-        input   [6:0]          rx6_uni_GFC        ,
+        input   [3:0]          rx6_uni_GFC        ,
         input   [7:0]          rx6_uni_VPI        ,
         input   [15:0]         rx6_uni_VCI        ,
         input                  rx6_uni_CLP        ,
@@ -83,7 +83,7 @@ module arbitor (
 
         input                  rx7_rxreq          ,
         output  reg            rx7_rxack          ,
-        input   [7:0]          rx7_uni_GFC        ,
+        input   [3:0]          rx7_uni_GFC        ,
         input   [7:0]          rx7_uni_VPI        ,
         input   [15:0]         rx7_uni_VCI        ,
         input                  rx7_uni_CLP        ,
@@ -93,7 +93,7 @@ module arbitor (
 
         input                  rx8_rxreq          ,
         output  reg            rx8_rxack          ,
-        input   [7:0]          rx8_uni_GFC        ,
+        input   [3:0]          rx8_uni_GFC        ,
         input   [7:0]          rx8_uni_VPI        ,
         input   [15:0]         rx8_uni_VCI        ,
         input                  rx8_uni_CLP        ,
@@ -104,7 +104,7 @@ module arbitor (
 
         input                  rx9_rxreq          ,
         output  reg            rx9_rxack          ,
-        input   [7:0]          rx9_uni_GFC        ,
+        input   [3:0]          rx9_uni_GFC        ,
         input   [7:0]          rx9_uni_VPI        ,
         input   [15:0]         rx9_uni_VCI        ,
         input                  rx9_uni_CLP        ,
@@ -115,7 +115,7 @@ module arbitor (
 
         input                  rx10_rxreq          ,
         output  reg            rx10_rxack          ,
-        input   [7:0]          rx10_uni_GFC        ,
+        input   [3:0]          rx10_uni_GFC        ,
         input   [7:0]          rx10_uni_VPI        ,
         input   [15:0]         rx10_uni_VCI        ,
         input                  rx10_uni_CLP        ,
@@ -126,7 +126,7 @@ module arbitor (
 
         input                  rx11_rxreq          ,
         output  reg            rx11_rxack          ,
-        input   [7:0]          rx11_uni_GFC        ,
+        input   [3:0]          rx11_uni_GFC        ,
         input   [7:0]          rx11_uni_VPI        ,
         input   [15:0]         rx11_uni_VCI        ,
         input                  rx11_uni_CLP        ,
@@ -137,7 +137,7 @@ module arbitor (
 
         input                  rx12_rxreq          ,
         output  reg            rx12_rxack          ,
-        input   [7:0]          rx12_uni_GFC        ,
+        input   [3:0]          rx12_uni_GFC        ,
         input   [7:0]          rx12_uni_VPI        ,
         input   [15:0]         rx12_uni_VCI        ,
         input                  rx12_uni_CLP        ,
@@ -148,7 +148,7 @@ module arbitor (
 
         input                  rx13_rxreq          ,
         output  reg            rx13_rxack          ,
-        input   [7:0]          rx13_uni_GFC        ,
+        input   [3:0]          rx13_uni_GFC        ,
         input   [7:0]          rx13_uni_VPI        ,
         input   [15:0]         rx13_uni_VCI        ,
         input                  rx13_uni_CLP        ,
@@ -159,7 +159,7 @@ module arbitor (
 
         input                  rx14_rxreq          ,
         output  reg            rx14_rxack          ,
-        input   [7:0]          rx14_uni_GFC        ,
+        input   [3:0]          rx14_uni_GFC        ,
         input   [7:0]          rx14_uni_VPI        ,
         input   [15:0]         rx14_uni_VCI        ,
         input                  rx14_uni_CLP        ,
@@ -170,7 +170,7 @@ module arbitor (
 
         input                  rx15_rxreq          ,
         output  reg            rx15_rxack          ,
-        input   [7:0]          rx15_uni_GFC        ,
+        input   [3:0]          rx15_uni_GFC        ,
         input   [7:0]          rx15_uni_VPI        ,
         input   [15:0]         rx15_uni_VCI        ,
         input                  rx15_uni_CLP        ,
@@ -905,20 +905,23 @@ module arbitor (
     ////////////////////////////////////////////////////////////////////////////////////
 
     wire                   tx0_fwd_req  = s_state_txrdy & forward[0] ;
-    wire                   tx1_fwd_req  = s_state_txrdy & forward[1] ;
-    wire                   tx2_fwd_req  = s_state_txrdy & forward[2] ;
-    wire                   tx3_fwd_req  = s_state_txrdy & forward[3] ;
-    wire                   tx4_fwd_req  = s_state_txrdy & forward[4] ;
-    wire                   tx5_fwd_req  = s_state_txrdy & forward[5] ;
-    wire                   tx6_fwd_req  = s_state_txrdy & forward[6] ;
-    wire                   tx7_fwd_req  = s_state_txrdy & forward[7] ;
-    wire                   tx8_fwd_req  = s_state_txrdy & forward[8] ;
-    wire                   tx9_fwd_req  = s_state_txrdy & forward[9] ;
-    wire                   tx10_fwd_req = s_state_txrdy & forward[10] ;
-    wire                   tx11_fwd_req = s_state_txrdy & forward[11] ;
-    wire                   tx12_fwd_req = s_state_txrdy & forward[12] ;
-    wire                   tx13_fwd_req = s_state_txrdy & forward[13] ;
-    wire                   tx14_fwd_req = s_state_txrdy & forward[14] ;
+
+    wire                   tx1_fwd_req  = s_state_txrdy & ( forward[1]  & rx_sel_vld_0to7  ) ;
+    wire                   tx2_fwd_req  = s_state_txrdy & ( forward[2]  & rx_sel_vld_0to7  ) ;
+    wire                   tx3_fwd_req  = s_state_txrdy & ( forward[3]  & rx_sel_vld_0to7  ) ;
+    wire                   tx4_fwd_req  = s_state_txrdy & ( forward[4]  & rx_sel_vld_0to7  ) ;
+    wire                   tx5_fwd_req  = s_state_txrdy & ( forward[5]  & rx_sel_vld_0to7  ) ;
+    wire                   tx6_fwd_req  = s_state_txrdy & ( forward[6]  & rx_sel_vld_0to7  ) ;
+    wire                   tx7_fwd_req  = s_state_txrdy & ( forward[7]  & rx_sel_vld_0to7  ) ;
+
+    wire                   tx8_fwd_req  = s_state_txrdy & ( forward[8]  & rx_sel_vld_8to15 ) ;
+    wire                   tx9_fwd_req  = s_state_txrdy & ( forward[9]  & rx_sel_vld_8to15 ) ;
+    wire                   tx10_fwd_req = s_state_txrdy & ( forward[10] & rx_sel_vld_8to15 ) ;
+    wire                   tx11_fwd_req = s_state_txrdy & ( forward[11] & rx_sel_vld_8to15 ) ;
+    wire                   tx12_fwd_req = s_state_txrdy & ( forward[12] & rx_sel_vld_8to15 ) ;
+    wire                   tx13_fwd_req = s_state_txrdy & ( forward[13] & rx_sel_vld_8to15 ) ;
+    wire                   tx14_fwd_req = s_state_txrdy & ( forward[14] & rx_sel_vld_8to15 ) ;
+
     wire                   tx15_fwd_req = s_state_txrdy & forward[15] ;
 
     // reg                    tx0_txreq ;
@@ -1056,21 +1059,24 @@ module arbitor (
             tx15_txreq <= 1'b1 ;
 
     ////////////////////////////////////////////////////////
-    wire      tx0_trig = ((forward[0] & tx0_txack) | (forward[0] == 1'b0)) & s_state_txfwd;
-    wire      tx1_trig = ((forward[1] & tx1_txack) | (forward[1] == 1'b0)) & s_state_txfwd;
-    wire      tx2_trig = ((forward[2] & tx2_txack) | (forward[2] == 1'b0)) & s_state_txfwd;
-    wire      tx3_trig = ((forward[3] & tx3_txack) | (forward[3] == 1'b0)) & s_state_txfwd;
-    wire      tx4_trig = ((forward[4] & tx4_txack) | (forward[4] == 1'b0)) & s_state_txfwd;
-    wire      tx5_trig = ((forward[5] & tx5_txack) | (forward[5] == 1'b0)) & s_state_txfwd;
-    wire      tx6_trig = ((forward[6] & tx6_txack) | (forward[6] == 1'b0)) & s_state_txfwd;
-    wire      tx7_trig = ((forward[7] & tx7_txack) | (forward[7] == 1'b0)) & s_state_txfwd;
-    wire      tx8_trig = ((forward[8] & tx8_txack) | (forward[8] == 1'b0)) & s_state_txfwd;
-    wire      tx9_trig = ((forward[9] & tx9_txack) | (forward[9] == 1'b0)) & s_state_txfwd;
-    wire      tx10_trig = ((forward[10] & tx10_txack) | (forward[10] == 1'b0)) & s_state_txfwd;
-    wire      tx11_trig = ((forward[11] & tx11_txack) | (forward[11] == 1'b0)) & s_state_txfwd;
-    wire      tx12_trig = ((forward[12] & tx12_txack) | (forward[12] == 1'b0)) & s_state_txfwd;
-    wire      tx13_trig = ((forward[13] & tx13_txack) | (forward[13] == 1'b0)) & s_state_txfwd;
-    wire      tx14_trig = ((forward[14] & tx14_txack) | (forward[14] == 1'b0)) & s_state_txfwd;
+    wire      tx0_trig  = ((forward[0]  & tx0_txack)  | (forward[0]  == 1'b0)) & s_state_txfwd;
+
+    wire      tx1_trig  = ((forward[1]  & tx1_txack)  | (forward[1]  == 1'b0) | (forward[1]  & rx_sel_vld_8to15)) & s_state_txfwd;
+    wire      tx2_trig  = ((forward[2]  & tx2_txack)  | (forward[2]  == 1'b0) | (forward[2]  & rx_sel_vld_8to15)) & s_state_txfwd;
+    wire      tx3_trig  = ((forward[3]  & tx3_txack)  | (forward[3]  == 1'b0) | (forward[3]  & rx_sel_vld_8to15)) & s_state_txfwd;
+    wire      tx4_trig  = ((forward[4]  & tx4_txack)  | (forward[4]  == 1'b0) | (forward[4]  & rx_sel_vld_8to15)) & s_state_txfwd;
+    wire      tx5_trig  = ((forward[5]  & tx5_txack)  | (forward[5]  == 1'b0) | (forward[5]  & rx_sel_vld_8to15)) & s_state_txfwd;
+    wire      tx6_trig  = ((forward[6]  & tx6_txack)  | (forward[6]  == 1'b0) | (forward[6]  & rx_sel_vld_8to15)) & s_state_txfwd;
+    wire      tx7_trig  = ((forward[7]  & tx7_txack)  | (forward[7]  == 1'b0) | (forward[7]  & rx_sel_vld_8to15)) & s_state_txfwd;
+
+    wire      tx8_trig  = ((forward[8]  & tx8_txack)  | (forward[8]  == 1'b0) | (forward[8]  & rx_sel_vld_0to7) ) & s_state_txfwd;
+    wire      tx9_trig  = ((forward[9]  & tx9_txack)  | (forward[9]  == 1'b0) | (forward[9]  & rx_sel_vld_0to7) ) & s_state_txfwd;
+    wire      tx10_trig = ((forward[10] & tx10_txack) | (forward[10] == 1'b0) | (forward[10] & rx_sel_vld_0to7) ) & s_state_txfwd;
+    wire      tx11_trig = ((forward[11] & tx11_txack) | (forward[11] == 1'b0) | (forward[11] & rx_sel_vld_0to7) ) & s_state_txfwd;
+    wire      tx12_trig = ((forward[12] & tx12_txack) | (forward[12] == 1'b0) | (forward[12] & rx_sel_vld_0to7) ) & s_state_txfwd;
+    wire      tx13_trig = ((forward[13] & tx13_txack) | (forward[13] == 1'b0) | (forward[13] & rx_sel_vld_0to7) ) & s_state_txfwd;
+    wire      tx14_trig = ((forward[14] & tx14_txack) | (forward[14] == 1'b0) | (forward[14] & rx_sel_vld_0to7) ) & s_state_txfwd;
+
     wire      tx15_trig = ((forward[15] & tx15_txack) | (forward[15] == 1'b0)) & s_state_txfwd;
 
     reg      tx0_done ;
