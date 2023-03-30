@@ -1,9 +1,10 @@
 # Makefile for SystemVerilog Testbench Lab1
 RTL= ../src/rtl/hec_cal.v ../src/rtl/LookupTable.v ../src/rtl/utopia1_atm_rx.v ../src/rtl/utopia1_atm_tx.v ../src/rtl/FwdLkp.v ../src/rtl/arbitor.v ../src/rtl/squat16.v ../src/rtl/squat.vh
-SVTB = ./top.sv ./cpu_ifc.sv ./Utopia.sv ./test.sv ./scoreboard.sv ./coverage.sv
-# seed = 1
+SVTB = ../src/tb/top.sv ../src/tb/cpu_ifc.sv ../src/tb/Utopia.sv
+SVCM = ../src/env/test.sv ../src/env/environment.sv ../src/env/config.sv ../src/env/generator.sv ../src/env/driver.sv ../src/env/monitor.sv ../src/env/scoreboard.sv ../src/env/coverage.sv
+seed = 1680163488
 
-seed = $(shell date +%s)
+# seed = $(shell date +%s)
 
 default: test 
 
@@ -13,7 +14,7 @@ run:
 	./simv -l simv.log +ntb_random_seed=$(seed)
 
 compile:
-	vcs -full64 -l vcs.log -sverilog -kdb +lint=TFIPC-L -debug_access+all $(SVTB) $(RTL) +vcs+vcdpluson -lca -fsdb
+	vcs -full64 -l vcs.log -sverilog -kdb +lint=TFIPC-L -debug_access+all $(SVTB) $(RTL) $(SVCM) +vcs+vcdpluson -lca -fsdb
 
 verdi:
 	verdi -ssf novas.fsdb -undockWin -nologo &
