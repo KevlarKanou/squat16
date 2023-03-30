@@ -1,5 +1,5 @@
 
-`include "definitions.sv" 
+`include "../src/env/definitions.sv" 
 
 interface Utopia(input bit clk);
 

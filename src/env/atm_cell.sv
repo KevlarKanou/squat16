@@ -1,4 +1,4 @@
-`include "definitions.sv"
+`include "../src/env/definitions.sv"
 
 typedef class NNI_cell;
 

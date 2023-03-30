@@ -2,13 +2,13 @@
 `define ENVIRONMENT__SV
 
 
-`include "generator.sv"
-`include "driver.sv"
-`include "monitor.sv"
-`include "config.sv"
-`include "scoreboard.sv"
-`include "coverage.sv"
-`include "cpu_driver.sv"
+`include "../src/env/generator.sv"
+`include "../src/env/driver.sv"
+`include "../src/env/monitor.sv"
+`include "../src/env/config.sv"
+`include "../src/env/scoreboard.sv"
+`include "../src/env/coverage.sv"
+`include "../src/env/cpu_driver.sv"
 
 
 /////////////////////////////////////////////////////////

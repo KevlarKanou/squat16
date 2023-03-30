@@ -1,6 +1,6 @@
 
-`include "definitions.sv"
-`include "atm_cell.sv"
+`include "../src/env/definitions.sv"
+`include "../src/env/atm_cell.sv"
 
 program automatic test
   #(parameter int NumRx = 4, parameter int NumTx = 4)
@@ -11,7 +11,7 @@ program automatic test
 	
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-  `include "environment.sv"
+  `include "../src/env/environment.sv"
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   Environment env;
